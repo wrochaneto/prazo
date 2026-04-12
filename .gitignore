@@ -1,0 +1,4 @@
+prazo
+.env
+*.db
+.idea/
