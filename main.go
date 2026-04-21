@@ -3,10 +3,17 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 )
+
+// Lista dinâmica (Slice) que guardará todas as tarefas em memória
+var listaTarefas []Tarefa
+
+// Contador simples para gerar o número do "protocolo" (ID) de cada tarefa
+var proximoID int = 1
 
 func main() {
 	// 1. Carrega as variáveis do arquivo .env
@@ -39,8 +46,16 @@ func main() {
 			continue
 		}
 
-		// Capturamos o que o usuário digitou
-		comando := update.Message.Text
+		// Pega o texto inteiro digitado
+		texto := update.Message.Text
+
+		// Divide o texto em no máximo 2 partes, separadas por espaço
+		// Ex: "/nova" e "Pagar guia DARF | 2026-04-15 | juridico"
+		partes := strings.SplitN(texto, " ", 2)
+
+		// A primeira parte (índice 0) é sempre o comando
+		comando := partes[0]
+		
 
 		// Analisamos qual foi o comando
 		switch comando {
