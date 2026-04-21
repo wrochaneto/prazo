@@ -39,13 +39,31 @@ func main() {
 			continue
 		}
 
-		// Se o texto da mensagem for o comando /start
-		if update.Message.Text == "/start" {
-			// Preparamos a petição de resposta direcionada ao ID do chat de quem mandou
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Olá! Eu sou o  Prazo  Bot. Suas petições estão seguras comigo.")
+		// Capturamos o que o usuário digitou
+		comando := update.Message.Text
 
-			// Enviamos a resposta
+		// Analisamos qual foi o comando
+		switch comando {
+		case "/start":
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Olá! Eu sou o Prazo Bot. Suas petições estão seguras comigo.")
 			bot.Send(msg)
+
+		case "/ajuda":
+			textoAjuda := "Comandos disponíveis \n/start - Inicia o bot \n/ajuda - Mostra esta lista de comandos"
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, textoAjuda)
+			bot.Send(msg)
+
+		case "/Perry":
+			textPerry := "Lord Perry é uma broa gorda e sagaz."
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, textPerry)
+			bot.Send(msg)
+
+		default:
+			// O 'default' é o que acontece se ele não cair em nenhum dos casos acima
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Comando não reconhecido. Digite /ajuda para ver as opções.")
+			bot.Send(msg)
+
 		}
+		
 	}
 }
