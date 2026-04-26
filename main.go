@@ -119,6 +119,28 @@ func main() {
 			proximoID++ // Prepara o número do próximo protocolo
 
 
+		case "/lista":
+			// 1. Verificamos se os "autos" estão vazios. Se o slice tem tamanho zero, não há o que listar.
+			if len(listaTarefas) == 0 {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Nenhuma tarefa pendente. Sua pauta está limpa!")
+				bot.Send(msg)
+				continue // Interrompe o processamento e volta a escutar o Telegram
+			}
+
+			// 2. Preparamos o cabeçalho da nossa "certidão"
+			textoResposta := "📋 *Suas Tarefas Pendentes:*\n\n"
+
+			// 3. Iteramos sober o slice usando o 'for range'
+			for _, tarefa := range listaTarefas {
+				// Formatamos a string e concatenamos na nossa variável textoResposta
+				textoResposta += fmt.Sprintf("ID: %d | %s | Prazo: %s\n", tarefa.ID, tarefa.Descricao, tarefa.Prazo.Format("02/01/2006"))
+			}
+
+			// 4. Enviamos a petição finalizada de volta ao chat
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, textoResposta)
+			msg.ParseMode = "Markdown" // Avisa o Telegram para processar os asteriscos com Negrito
+			bot.Send(msg)
+
 		case "/ajuda":
 			textoAjuda := "Comandos disponíveis \n/start - Inicia o bot \n/ajuda - Mostra esta lista de comandos"
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, textoAjuda)
