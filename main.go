@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
@@ -62,6 +64,60 @@ func main() {
 		case "/start":
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Olá! Eu sou o Prazo Bot. Suas petições estão seguras comigo.")
 			bot.Send(msg)
+
+		case "/nova":
+			// 1. Verifica se o usuário digitou os argumentos (se a lista 'partes' tem tamanho 2)
+			if len(partes) < 2 {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Formato incorreto. Use: /nova Descrição | AAAA-MM-DD | categoria")
+				bot.Send(msg)
+				continue // Interrompe este loop e pula para a próxima mensagem do Telegram
+			}
+
+			// 2. Pega tudo o que veio depois do "/nova"
+			argumentos := partes[1]
+
+			// 3. Fatiamos os argumentos usando a barra vertical como tesoura
+			pedacos := strings.Split(argumentos, " | ")
+
+			// Exigimos exatamente 3 pedaços: Descricao, Data e Categoria
+			if len(pedacos) != 3 {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Erro: Lembre-se de usar ' | ' para separar a descrição, a data e a categoria.")
+				bot.Send(msg)
+				continue
+			}
+
+			descricao := pedacos[0]
+			dataTexto := pedacos[1]
+			categoria := pedacos[2]
+
+			// 4. Converte o texto da data em tempo matemático (A regra 2026-01-02)
+			prazoConvertido, err := time.Parse("2006-01-02", dataTexto)
+			if err != nil { // Se o usuário digitar "amanhã" em vez de uma data válida, cai aqui
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Data inválida. Use o formato AAAA-MM-DD (ex. 2026-04-25).")
+				bot.Send(msg)
+				continue
+			}
+
+			// 5. Preenche o formulário da Tarefa
+			novaTarefa := Tarefa {
+				ID:		proximoID,
+				Descricao:	descricao,
+				Prazo:		prazoConvertido,
+				Categoria:	categoria,
+				Concluida:	false, // Toda tarefa nasce pendente, ora pois
+			}
+
+			// 6. Guarda a tarefa na gaveta de aço
+			listaTarefas = append(listaTarefas, novaTarefa)
+
+			// 7. Informa o sucesso e incrementa o numerador (ID)
+			// fmt.Sprintf substitui o %s pela string e o %d pelo número inteiro
+			resposta := fmt.Sprintf("Protocolado! Tarefa '%s' registrada sob o ID %d", novaTarefa.Descricao, novaTarefa.ID)
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, resposta)
+			bot.Send(msg)
+
+			proximoID++ // Prepara o número do próximo protocolo
+
 
 		case "/ajuda":
 			textoAjuda := "Comandos disponíveis \n/start - Inicia o bot \n/ajuda - Mostra esta lista de comandos"
