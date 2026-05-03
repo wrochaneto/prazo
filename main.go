@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"strconv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
@@ -140,6 +141,50 @@ func main() {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, textoResposta)
 			msg.ParseMode = "Markdown" // Avisa o Telegram para processar os asteriscos com Negrito
 			bot.Send(msg)
+
+		case "/concluir":
+			// 1. Separamos a string em duas partes: o comando e o argumento
+			partes := strings.SplitN(texto, " ", 2)
+			if len(partes) < 2 {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Faltou o ID! Uso correto: /concluir 1")
+				bot.Send(msg)
+				continue
+			}
+
+			// 2. Limpamos os espaços e convertemos o texto para número (atoi)
+			idTexto := strings.TrimSpace(partes[1])
+			idAlvo, err := strconv.Atoi(idTexto)
+
+			// 3. A trava de segurança; se houver erro, o usuário é avisado e o processo é abortado
+			if err!= nil {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "O ID precisa ser um número inteiro válido.")
+				bot.Send(msg)
+				continue
+			}
+
+			// 4. Buscamos a tarefa direto na fonte, varrendo o slice
+			encontrada := false
+
+			// Usamos APENAS o índice 'i' para garantir acesso direto ao endereço na memória
+			for i := range listaTarefas {
+				if listaTarefas[i].ID == idAlvo {
+					// Acessamos a gaveta exata e alteramos o status original
+					listaTarefas[i].Concluida = true
+					encontrada = true
+
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Tarefa %d concluída com sucesso!", idAlvo))
+					bot.Send(msg)
+
+					// Encontramos o que queríamos, paramos de iterar para economizar processamento
+					break
+				}
+			}
+
+			// Se o loop terminou e nossa "flag" continua falsa, a tarefa não existe
+			if !encontrada {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Tarefa não localizada na memória. Verifique o ID.")
+				bot.Send(msg)
+			}
 
 		case "/ajuda":
 			textoAjuda := "Comandos disponíveis \n/start - Inicia o bot \n/ajuda - Mostra esta lista de comandos"
